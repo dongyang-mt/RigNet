@@ -1,0 +1,88 @@
+20221130: Linux安装完环境之后，docker里面无法打开X11界面出现如下问题；
+
+
+(rignet) dongyang@work:/opt/data/dongyang/code/RigNet$ python quick_start.py
+loading all networks...
+     joint prediction network loaded.
+     root prediction network loaded.
+     connection prediction network loaded.
+     skinning prediction network loaded.
+creating data for model ID 17872
+     gathering topological edges.
+     calculating surface geodesic matrix.
+surface geodesic calculation: 6.82753586769104 seconds
+     gathering geodesic edges.
+
+--- [binvox] mesh voxelizer, version 1.26, build #644 on 2017/10/22 15:19:22
+--- written by Patrick Min, 2004-2017
+
+  will use offscreen pbuffer instead of onscreen window
+loading model file...
+MeshFileIdentifier::*create_mesh_file(quick_start/17872_normalized.obj)
+ObjMeshFile::load(quick_start/17872_normalized.obj)
+3064 quick_start/17872_normalized.obj
+  3065 lines read
+Read 2020 faces, 1040 vertices.
+Mesh memory use is 1552 KB (1 MB)
+  Mesh::normalize, bounding box: [-0.5, 0, -0.32287, 1] - [0.5, 0.436996, 0.32287, 1]
+    longest length: 1
+  normalization transform:
+  (1) translate [0.5, -0, 0.32287, 1], (2) scale 1, (3) translate [0, 0, 0]
+
+voxel model dimension: 88
+Pbuffer::Pbuffer(88, 88)
+libGL error: No matching fbConfigs or visuals found
+libGL error: failed to load driver: swrast
+using: Single buffered, depth buffer
+GLX_WIDTH = 88
+GLX_HEIGHT = 88
+GLX_PRESERVED_CONTENTS = 1
+GLX_LARGEST_PBUFFER = 0
+GLX_FBCONFIG_ID = 71
+X Error of failed request:  GLXBadContext
+  Major opcode of failed request:  146 (GLX)
+  Minor opcode of failed request:  5 (X_GLXMakeCurrent)
+  Serial number of failed request:  35
+  Current serial number in output stream:  35
+Traceback (most recent call last):
+  File "/opt/data/dongyang/code/RigNet/quick_start.py", line 440, in <module>
+    data, vox, surface_geodesic, translation_normalize, scale_normalize = create_single_data(mesh_filename)
+  File "/opt/data/dongyang/code/RigNet/quick_start.py", line 103, in create_single_data
+    with open(mesh_filaname.replace('_remesh.obj', '_normalized.binvox'), 'rb') as fvox:
+FileNotFoundError: [Errno 2] No such file or directory: 'quick_start/17872_normalized.binvox'
+
+
+(rignet) dongyang@work:/opt/data/dongyang/code/RigNet$ python quick_start.py 
+loading all networks...
+     joint prediction network loaded.
+     root prediction network loaded.
+     connection prediction network loaded.
+     skinning prediction network loaded.
+creating data for model ID 17872
+     gathering topological edges.
+     calculating surface geodesic matrix.
+surface geodesic calculation: 7.738323926925659 seconds
+     gathering geodesic edges.
+
+--- [binvox] mesh voxelizer, version 1.26, build #644 on 2017/10/22 15:19:22
+--- written by Patrick Min, 2004-2017
+
+  will use offscreen pbuffer instead of onscreen window
+loading model file...
+MeshFileIdentifier::*create_mesh_file(quick_start/17872_normalized.obj)
+ObjMeshFile::load(quick_start/17872_normalized.obj)
+3064 quick_start/17872_normalized.obj
+  3065 lines read
+Read 2020 faces, 1040 vertices.
+Mesh memory use is 1772 KB (1 MB)
+  Mesh::normalize, bounding box: [-0.5, 0, -0.32287, 1] - [0.5, 0.436996, 0.32287, 1]
+    longest length: 1
+  normalization transform:
+  (1) translate [0.5, -0, 0.32287, 1], (2) scale 1, (3) translate [0, 0, 0]
+freeglut (./binvox): failed to open display ''
+Traceback (most recent call last):
+  File "/opt/data/dongyang/code/RigNet/quick_start.py", line 440, in <module>
+    data, vox, surface_geodesic, translation_normalize, scale_normalize = create_single_data(mesh_filename)
+  File "/opt/data/dongyang/code/RigNet/quick_start.py", line 103, in create_single_data
+    with open(mesh_filaname.replace('_remesh.obj', '_normalized.binvox'), 'rb') as fvox:
+FileNotFoundError: [Errno 2] No such file or directory: 'quick_start/17872_normalized.binvox
