@@ -13,3 +13,5 @@ checkpoints/
 sideview.json
 quick_start/*.binvox
 quick_start/*_normalized*
+datasets/ModelResource_RigNetv1_preproccessed/
+datasets/ModelsResource-RigNetv1-fbx.zip

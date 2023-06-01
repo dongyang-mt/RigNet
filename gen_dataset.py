@@ -73,6 +73,9 @@ def genDataset(process_id):
             remeshed_obj.compute_vertex_normals()
         remesh_obj_vn = np.asarray(remeshed_obj.vertex_normals)
         remesh_obj_f = np.asarray(remeshed_obj.triangles)
+        v_template = remesh_obj_v.copy()
+        faces = remesh_obj_f.copy()
+
         rig_info = Info(info_filename)
 
         #vertices
@@ -97,6 +100,14 @@ def genDataset(process_id):
         joint_pos_list = list(joint_pos.values())
         joint_pos_list = [np.array(i) for i in joint_pos_list]
         adjacent_matrix = rig_info.adjacent_matrix()
+        joints = np.array(joint_pos_list)
+        parents = np.zeros((len(joint_pos_list)), dtype=np.int32)
+        parents[0] = -1
+        for i in range(adjacent_matrix.shape[0]):
+            for j in range(i, adjacent_matrix.shape[1]):
+                if adjacent_matrix[i, j] >= 1.0:
+                    parents[j] = i
+
         joint_filename = os.path.join(dataset_folder, '{:s}/{:d}_j.txt'.format(split_name, model_id))
         adj_filename = os.path.join(dataset_folder, '{:s}/{:d}_adj.txt'.format(split_name, model_id))
         np.savetxt(adj_filename, adjacent_matrix, fmt='%d')
@@ -117,6 +128,7 @@ def genDataset(process_id):
 
         input_samples = []  # mesh_vertex_id, (bone_id, 1 / D_g, is_leaf) * N
         ground_truth_labels = []  # w_1, w_2, ..., w_N
+        skinning_weight = np.zeros((len(v_template), len(joint_pos_list)), dtype=np.float32)
         for vert_remesh_id in range(len(remesh_obj_v)):
             this_sample = [vert_remesh_id]
             this_label = []
@@ -124,6 +136,7 @@ def genDataset(process_id):
             skin_w = {}
             for i in np.arange(1, len(skin), 2):
                 skin_w[skin[i]] = float(skin[i + 1])
+                skinning_weight[vert_remesh_id, joint_name_list.index(skin[i])] = float(skin[i + 1])
             bone_id_near_to_far = np.argsort(geo_dist[vert_remesh_id, :])
             for i in range(num_nearest_bone):
                 if i >= len(bone_id_near_to_far):
@@ -161,9 +174,51 @@ def genDataset(process_id):
                     fout.write('{:.3f} '.format(ground_truth_labels[i][j]))
                 fout.write('\n')
 
+        mtSMPLX_Forward_data = {}
+        # v_template: V*3
+        mtSMPLX_Forward_data["v_template"] = v_template
+        # faces: F*3
+        mtSMPLX_Forward_data["faces"] = faces
+        # parents: J*3
+        mtSMPLX_Forward_data["joints"] = joints
+        # parents: J*1
+        mtSMPLX_Forward_data["parents"] = parents
+        # lbs_weights: J*V
+        mtSMPLX_Forward_data["lbs_weights"] = skinning_weight
+        skinnedmesh_path = os.path.join(dataset_folder, '{:s}/{:d}_skinnedmesh.npz'.format(split_name, model_id))
+        np.savez(skinnedmesh_path, **mtSMPLX_Forward_data)
+
+def merge_to_skinnedmesh_model(remesh_obj_v, faces, split_name, model_id, joint_pos_list, adjacent_matrix, ground_truth_labels, input_samples, bone_names, joint_name_list):
+        v_template = remesh_obj_v.copy()
+        joints = np.array(joint_pos_list)
+        parents = np.zeros((len(joint_pos_list)), dtype=np.int32)
+        parents[0] = -1
+        for i in range(adjacent_matrix.shape[0]):
+            for j in range(i, adjacent_matrix.shape[1]):
+                if adjacent_matrix[i, j] >= 1.0:
+                    parents[j] = i
+        skinning_weight = np.zeros((len(remesh_obj_v), len(joint_pos_list)), dtype=np.float32)
+        for vert_remesh_id in range(len(ground_truth_labels)):
+            for index in range(len(ground_truth_labels[vert_remesh_id])):
+                joint_remesh_id = joint_name_list.index(bone_names[input_samples[vert_remesh_id][int(index*3+1)]][0])
+                skinning_weight[vert_remesh_id, joint_remesh_id] = ground_truth_labels[vert_remesh_id][index]
+        mtSMPLX_Forward_data = {}
+        # v_template: V*3
+        mtSMPLX_Forward_data["v_template"] = v_template
+        # faces: F*3
+        mtSMPLX_Forward_data["faces"] = faces
+        # parents: J*3
+        mtSMPLX_Forward_data["joints"] = joints
+        # parents: J*1
+        mtSMPLX_Forward_data["parents"] = parents
+        # lbs_weights: J*V
+        mtSMPLX_Forward_data["lbs_weights"] = skinning_weight
+        skinnedmesh_path = os.path.join(dataset_folder, '{:s}/{:d}_skinnedmesh.npz'.format(split_name, model_id))
+        np.savez(skinnedmesh_path, **mtSMPLX_Forward_data)
+
 
 if __name__ == '__main__':
-    dataset_folder = "/media/zhanxu/4T/ModelResource_RigNetv1_preproccessed/"
-    p = Pool(8)
-    p.map(genDataset, [0, 1, 2, 3, 4, 5, 6, 7])
-    #genDataset(0)
+    dataset_folder = "RigNet/datasets/ModelResource_RigNetv1_preproccessed/"
+    # p = Pool(8)
+    # p.map(genDataset, [0, 1, 2, 3, 4, 5, 6, 7])
+    genDataset(0)
